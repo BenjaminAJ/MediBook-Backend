@@ -1,7 +1,7 @@
-import express from "experss";
+import express from "express";
 import dotenv from "dotenv";
 
-const app = express;
+const app = express();
 
 dotenv.config();
 
