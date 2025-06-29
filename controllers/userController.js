@@ -62,7 +62,7 @@ export const registerUser = asyncHandler(async (req, res) => {
 // @desc    Authenticate user and get token
 // @route   POST /api/auth/login
 // @access  Public
-const loginUser = asyncHandler(async (req, res) => {
+export const loginUser = asyncHandler(async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });
