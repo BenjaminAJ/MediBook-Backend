@@ -88,7 +88,7 @@ userSchema.methods.comparePassword = async function (candidatePassword) {
 
 //Encrypt Sensitive Fields
 userSchema.plugin(mongooseEncryption, {
-  enccryptionKey: process.env.ENCRYPTION_KEY,
+  encryptionKey: process.env.ENCRYPTION_KEY,
   signingKey: process.env.SIGNING_KEY,
   encryptedFields: encryptFields,
 });

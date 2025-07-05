@@ -4,6 +4,10 @@ import cors from "cors";
 import YAML from "yamljs";
 import swaggerUi from "swagger-ui-express";
 import errorHandler from "./middleware/errorHandler.js";
+
+// Load environment variables from .env file
+dotenv.config();
+
 // Importing routes
 import authRoutes from "./routes/authRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
@@ -15,8 +19,6 @@ const app = express();
 // Load Swagger documentation
 const swaggerDocument = YAML.load( 'docs/swagger.yaml');
 
-// Load environment variables from .env file
-dotenv.config();
 
 // Enable CORS for all origins
 app.use(cors({ origins: "*", credentials: true }));
