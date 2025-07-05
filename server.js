@@ -4,6 +4,8 @@ import cors from "cors";
 import errorHandler from "./middleware/errorHandler";
 // Importing routes
 import authRoutes from "./routes/authRoutes.js";
+import userRoutes from "./routes/userRoutes.js";
+import adminRoutes from "./routes/adminRoutes.js";
 
 const app = express();
 
@@ -19,6 +21,8 @@ app.use(express.urlencoded({ extended: false }));
 
 // Routes
 app.use("/api/auth", authRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/admin", adminRoutes);
 
 // Error handling middleware
 app.use(errorHandler);
