@@ -63,8 +63,15 @@ In the project directory, you can run:
 
 ## API Documentation
 
-The API is documented using Swagger. Once the server is running, you can access the documentation at:
-[http://localhost:3000/api-docs](http://localhost:3000/api-docs)
+The API is documented using Swagger. You can access the live documentation at:
+[https://medibook-backend-s172.onrender.com/api-docs](https://medibook-backend-s172.onrender.com/api-docs)
+
+For local development, it's available at `http://localhost:PORT/api-docs`.
+
+## Deployment
+
+This backend is deployed on Render. The base URL for the API is:
+[https://medibook-backend-s172.onrender.com](https://medibook-backend-s172.onrender.com)
 
 ## Technologies Used
 
