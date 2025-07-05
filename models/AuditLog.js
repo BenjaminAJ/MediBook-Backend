@@ -21,8 +21,10 @@ const auditLogSchema = mongoose.Schema({
       "update_appointment",
       "cancel_appointment",
       "view_patient_data",
+      "view_all_users",
+      "view_audit_logs",
+      "update_user_role",
       "update_system_config",
-      "view_all_users"
     ],
     trim: true,
   },
