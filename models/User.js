@@ -25,7 +25,10 @@ const userSchema = mongoose.Schema(
     phone: {
       type: String,
       required: [true, "Phone number is required"],
-      match: [/^\d{10}$/, "Please enter a valid phone number"],
+      match: [
+        /^(?:\+234|234|0)[789][01]\d{8}$/,
+        "Please enter a valid Nigerian phone number",
+      ],
       trim: true,
     },
     address: {
@@ -61,36 +64,34 @@ const userSchema = mongoose.Schema(
   { timestamps: true }
 );
 
-
 //Sensitive Fields to Encrypt
 const encryptFields = ["name", "phone", "address", "medicalInfo"];
 
 //HashPassword Middleware
-userSchema.pre("save", async function (next){
-    if (!this.isModified("password")) {
-        return next();
-    }
-    try {
-        const salt = await bcrypt.genSalt(10);
-        this.password = await bcrypt.hash(this.password, salt);
-        next();
-    } catch (error) {
-        next(error);
-    }
-})
-
+userSchema.pre("save", async function (next) {
+  if (!this.isModified("password")) {
+    return next();
+  }
+  try {
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt);
+    next();
+  } catch (error) {
+    next(error);
+  }
+});
 
 //Method to Compare Passwords
 userSchema.methods.comparePassword = async function (candidatePassword) {
-    return await bcrypt.compare(candidatePassword, this.password);
+  return await bcrypt.compare(candidatePassword, this.password);
 };
 
 //Encrypt Sensitive Fields
 userSchema.plugin(mongooseEncryption, {
-    enccryptionKey: process.env.ENCRYPTION_KEY,
-    signingKey: process.env.SIGNING_KEY,
-    encryptedFields: encryptFields,
-})
+  enccryptionKey: process.env.ENCRYPTION_KEY,
+  signingKey: process.env.SIGNING_KEY,
+  encryptedFields: encryptFields,
+});
 
 userSchema.index({ email: 1 }, { unique: true });
 userSchema.index({ role: 1 });
