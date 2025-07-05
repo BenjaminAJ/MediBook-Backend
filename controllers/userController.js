@@ -109,3 +109,35 @@ const generateToken = (id, role) => {
     expiresIn: "1h", // Token expires in 1 hour
   });
 };
+
+
+// @desc    Get user profile
+// @route   GET /api/users/:id
+// @access  Private (user or admin)
+export const getUserProfile = asyncHandler(async (req, res) => {
+  const userId = req.params.id;
+  const requestingUser = req.user; // From auth middleware
+
+  // Restrict access: Users can only view their own profile, admins can view any
+  if (requestingUser.id.toString() !== userId && requestingUser.role !== 'admin') {
+    res.status(403);
+    throw new Error('Not authorized to view this profile');
+  }
+
+  const user = await User.findById(userId).select('-password');
+  if (!user) {
+    res.status(404);
+    throw new Error('User not found');
+  }
+
+  // Log profile view (only for admin accessing another user’s data)
+  if (requestingUser.role === 'admin' && requestingUser.id.toString() !== userId) {
+    await AuditLog.create({
+      userId: requestingUser.id,
+      action: 'view_patient_data',
+      details: { viewedUserId: userId, viewedRole: user.role },
+    });
+  }
+
+  res.status(200).json(user);
+});
