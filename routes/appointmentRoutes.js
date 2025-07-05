@@ -74,4 +74,4 @@ router.get(
   getPatientAppointments
 );
 
-module.exports = router;
+export default router;

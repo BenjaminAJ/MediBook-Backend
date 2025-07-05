@@ -1,6 +1,5 @@
 import mongoose from "mongoose";
 import mongooseEncryption from "mongoose-encryption";
-import { act } from "react";
 
 const auditLogSchema = mongoose.Schema({
   userId: {
