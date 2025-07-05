@@ -6,6 +6,7 @@ import errorHandler from "./middleware/errorHandler";
 import authRoutes from "./routes/authRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
+import appointmentRoutes from "./routes/appointmentRoutes.js";
 
 const app = express();
 
@@ -23,6 +24,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/appointments", appointmentRoutes);
 
 // Error handling middleware
 app.use(errorHandler);
