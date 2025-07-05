@@ -1,12 +1,9 @@
 import express from "express";
-import dotenv from "dotenv";
 import cors from "cors";
 import YAML from "yamljs";
 import swaggerUi from "swagger-ui-express";
 import errorHandler from "./middleware/errorHandler.js";
 
-// Load environment variables from .env file
-dotenv.config();
 
 // Importing routes
 import authRoutes from "./routes/authRoutes.js";
