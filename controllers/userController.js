@@ -2,6 +2,7 @@ import asyncHandler from "express-async-handler";
 import User from "../models/User.js";
 import AuditLog from "../models/AuditLog.js";
 import jwt from "jsonwebtoken";
+import { validationResult } from "express-validator";
 
 // @desc    Register a new user (patient, provider, or admin)
 // @route   POST /api/auth/register
@@ -103,13 +104,6 @@ export const loginUser = asyncHandler(async (req, res) => {
   });
 });
 
-// Helper function to generate JWT
-const generateToken = (id, role) => {
-  return jwt.sign({ id, role }, process.env.JWT_SECRET, {
-    expiresIn: "1h", // Token expires in 1 hour
-  });
-};
-
 
 // @desc    Get user profile
 // @route   GET /api/users/:id
@@ -141,3 +135,64 @@ export const getUserProfile = asyncHandler(async (req, res) => {
 
   res.status(200).json(user);
 });
+
+// @desc    Update user profile
+// @route   PUT /api/users/:id
+// @access  Private (user or admin)
+export const updateUserProfile = asyncHandler(async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
+  const userId = req.params.id;
+  const requestingUser = req.user; // From auth middleware
+
+  // Restrict access: Users can only update their own profile, admins can update any
+  if (requestingUser.id.toString() !== userId && requestingUser.role !== 'admin') {
+    res.status(403);
+    throw new Error('Not authorized to update this profile');
+  }
+
+  const user = await User.findById(userId);
+  if (!user) {
+    res.status(404);
+    throw new Error('User not found');
+  }
+
+  // Update allowed fields
+  const { name, phone, address, medicalInfo, providerInfo } = req.body;
+  user.name = name || user.name;
+  user.phone = phone || user.phone;
+  user.address = address || user.address;
+  if (user.role === 'patient') {
+    user.medicalInfo = medicalInfo || user.medicalInfo;
+  }
+  if (user.role === 'provider') {
+    user.providerInfo = providerInfo || user.providerInfo;
+  }
+
+  await user.save();
+
+  // Log update action
+  await AuditLog.create({
+    userId: requestingUser.id,
+    action: 'update_user',
+    details: { updatedUserId: userId, updatedFields: Object.keys(req.body) },
+  });
+
+  res.status(200).json({
+    _id: user.id,
+    role: user.role,
+    email: user.email,
+    name: user.name,
+  });
+});
+
+
+// Helper function to generate JWT
+const generateToken = (id, role) => {
+  return jwt.sign({ id, role }, process.env.JWT_SECRET, {
+    expiresIn: "1h", // Token expires in 1 hour
+  });
+};
