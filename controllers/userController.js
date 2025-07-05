@@ -18,6 +18,11 @@ export const registerUser = asyncHandler(async (req, res) => {
     medicalInfo,
     providerInfo,
   } = req.body;
+  
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
 
   // Check if user already exists
   const userExists = await User.findOne({ email });
@@ -104,7 +109,6 @@ export const loginUser = asyncHandler(async (req, res) => {
   });
 });
 
-
 // @desc    Get user profile
 // @route   GET /api/users/:id
 // @access  Private (user or admin)
@@ -113,22 +117,28 @@ export const getUserProfile = asyncHandler(async (req, res) => {
   const requestingUser = req.user; // From auth middleware
 
   // Restrict access: Users can only view their own profile, admins can view any
-  if (requestingUser.id.toString() !== userId && requestingUser.role !== 'admin') {
+  if (
+    requestingUser.id.toString() !== userId &&
+    requestingUser.role !== "admin"
+  ) {
     res.status(403);
-    throw new Error('Not authorized to view this profile');
+    throw new Error("Not authorized to view this profile");
   }
 
-  const user = await User.findById(userId).select('-password');
+  const user = await User.findById(userId).select("-password");
   if (!user) {
     res.status(404);
-    throw new Error('User not found');
+    throw new Error("User not found");
   }
 
   // Log profile view (only for admin accessing another user’s data)
-  if (requestingUser.role === 'admin' && requestingUser.id.toString() !== userId) {
+  if (
+    requestingUser.role === "admin" &&
+    requestingUser.id.toString() !== userId
+  ) {
     await AuditLog.create({
       userId: requestingUser.id,
-      action: 'view_patient_data',
+      action: "view_patient_data",
       details: { viewedUserId: userId, viewedRole: user.role },
     });
   }
@@ -149,15 +159,18 @@ export const updateUserProfile = asyncHandler(async (req, res) => {
   const requestingUser = req.user; // From auth middleware
 
   // Restrict access: Users can only update their own profile, admins can update any
-  if (requestingUser.id.toString() !== userId && requestingUser.role !== 'admin') {
+  if (
+    requestingUser.id.toString() !== userId &&
+    requestingUser.role !== "admin"
+  ) {
     res.status(403);
-    throw new Error('Not authorized to update this profile');
+    throw new Error("Not authorized to update this profile");
   }
 
   const user = await User.findById(userId);
   if (!user) {
     res.status(404);
-    throw new Error('User not found');
+    throw new Error("User not found");
   }
 
   // Update allowed fields
@@ -165,10 +178,10 @@ export const updateUserProfile = asyncHandler(async (req, res) => {
   user.name = name || user.name;
   user.phone = phone || user.phone;
   user.address = address || user.address;
-  if (user.role === 'patient') {
+  if (user.role === "patient") {
     user.medicalInfo = medicalInfo || user.medicalInfo;
   }
-  if (user.role === 'provider') {
+  if (user.role === "provider") {
     user.providerInfo = providerInfo || user.providerInfo;
   }
 
@@ -177,7 +190,7 @@ export const updateUserProfile = asyncHandler(async (req, res) => {
   // Log update action
   await AuditLog.create({
     userId: requestingUser.id,
-    action: 'update_user',
+    action: "update_user",
     details: { updatedUserId: userId, updatedFields: Object.keys(req.body) },
   });
 
@@ -188,7 +201,6 @@ export const updateUserProfile = asyncHandler(async (req, res) => {
     name: user.name,
   });
 });
-
 
 // Helper function to generate JWT
 const generateToken = (id, role) => {
