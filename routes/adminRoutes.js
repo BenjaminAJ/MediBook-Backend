@@ -1,5 +1,5 @@
 import express from "express";
-import { deleteUser, getAllUsers, getAuditLogs } from "../controllers/adminController.js";
+import { deleteUser, getAllUsers, getAuditLogs, updateUserRole } from "../controllers/adminController.js";
 import { adminMiddleware } from "../middleware/admin.js";
 import { authMiddleware } from "../middleware/auth.js";
 import { body, param } from "express-validator";
@@ -55,6 +55,13 @@ router.delete(
   adminMiddleware,
   [param("id").isMongoId().withMessage("Invalid user ID")],
   deleteUser
+);
+
+router.put(
+  '/users/:id/role',
+  authMiddleware,
+  [param('id').isMongoId().withMessage('Invalid user ID'), ...roleValidation],
+  updateUserRole
 );
 
 export default router;

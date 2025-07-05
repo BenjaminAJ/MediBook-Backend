@@ -94,3 +94,52 @@ export const getAuditLogs = asyncHandler(async (req, res) => {
 
   res.status(200).json(logs);
 });
+
+// @desc    Update user role (admin only)
+// @route   PUT /api/admin/users/:id/role
+// @access  Private (admin only)
+export const updateUserRole = asyncHandler(async (req, res) => {
+  // Ensure only admins can access
+  if (req.user.role !== 'admin') {
+    res.status(403);
+    throw new Error('Not authorized: Admin access required');
+  }
+
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
+  const userId = req.params.id;
+  const { role } = req.body;
+
+  // Prevent admins from modifying their own role
+  if (req.user._id.toString() === userId) {
+    res.status(400);
+    throw new Error('Cannot modify your own role');
+  }
+
+  // Find user
+  const user = await User.findById(userId);
+  if (!user) {
+    res.status(404);
+    throw new Error('User not found');
+  }
+
+  // Update role
+  user.role = role;
+  await user.save();
+
+  // Log the action
+  await AuditLog.create({
+    userId: req.user._id,
+    action: 'update_user_role',
+    details: { updatedUserId: userId, oldRole: user.role, newRole: role },
+  });
+
+  res.status(200).json({
+    _id: user._id,
+    email: user.email,
+    role: user.role,
+  });
+});
