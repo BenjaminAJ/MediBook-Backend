@@ -1,6 +1,8 @@
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
+import YAML from "yamljs";
+import swaggerUi from "swagger-ui-express";
 import errorHandler from "./middleware/errorHandler";
 // Importing routes
 import authRoutes from "./routes/authRoutes.js";
@@ -9,6 +11,9 @@ import adminRoutes from "./routes/adminRoutes.js";
 import appointmentRoutes from "./routes/appointmentRoutes.js";
 
 const app = express();
+
+// Load Swagger documentation
+const swaggerDocument = YAML.load( 'docs/swagger.yaml');
 
 // Load environment variables from .env file
 dotenv.config();
@@ -25,6 +30,8 @@ app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/appointments", appointmentRoutes);
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+
 
 // Error handling middleware
 app.use(errorHandler);

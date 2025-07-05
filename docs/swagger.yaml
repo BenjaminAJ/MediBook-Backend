@@ -1,0 +1,787 @@
+openapi: 3.0.3
+info:
+  title: MediBook Backend API
+  description: API for managing patient registration and appointment scheduling in a secure, HIPAA/GDPR-compliant healthcare application.
+  version: 1.0.0
+servers:
+  - url: http://localhost:5000/api
+    description: Local development server
+  - url: https://api.medibook.example.com/api
+    description: Production server
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    User:
+      type: object
+      properties:
+        _id:
+          type: string
+          description: Unique identifier for the user
+        role:
+          type: string
+          enum: [patient, provider, admin]
+          description: User role
+        email:
+          type: string
+          description: User email
+        name:
+          type: string
+          description: User name
+        phone:
+          type: string
+          description: User phone number (E.164 format)
+        address:
+          type: object
+          properties:
+            street:
+              type: string
+            city:
+              type: string
+            state:
+              type: string
+            postalCode:
+              type: string
+            country:
+              type: string
+        medicalInfo:
+          type: object
+          properties:
+            dateOfBirth:
+              type: string
+              format: date
+            bloodType:
+              type: string
+              enum: [A+, A-, B+, B-, AB+, AB-, O+, O-]
+            allergies:
+              type: array
+              items:
+                type: string
+            medicalHistory:
+              type: array
+              items:
+                type: string
+        providerInfo:
+          type: object
+          properties:
+            specialization:
+              type: string
+            clinicName:
+              type: string
+            licenseNumber:
+              type: string
+    Appointment:
+      type: object
+      properties:
+        _id:
+          type: string
+          description: Unique identifier for the appointment
+        patientId:
+          type: object
+          properties:
+            _id:
+              type: string
+            name:
+              type: string
+            email:
+              type: string
+          description: Patient details (populated)
+        providerId:
+          type: object
+          properties:
+            _id:
+              type: string
+            name:
+              type: string
+            specialization:
+              type: string
+          description: Provider details (populated)
+        dateTime:
+          type: string
+          format: date-time
+          description: Appointment date and time
+        status:
+          type: string
+          enum: [pending, confirmed, cancelled, completed]
+          description: Appointment status
+        notes:
+          type: string
+          description: Additional notes (encrypted)
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    AuditLog:
+      type: object
+      properties:
+        _id:
+          type: string
+          description: Unique identifier for the audit log
+        userId:
+          type: object
+          properties:
+            _id:
+              type: string
+            name:
+              type: string
+            email:
+              type: string
+            role:
+              type: string
+          description: User who performed the action
+        action:
+          type: string
+          enum:
+            - login
+            - logout
+            - register_user
+            - update_user
+            - delete_user
+            - create_appointment
+            - update_appointment
+            - cancel_appointment
+            - view_patient_data
+            - view_all_users
+            - view_audit_logs
+            - update_user_role
+            - view_provider_appointments
+            - view_patient_appointments
+          description: Action performed
+        details:
+          type: object
+          description: Additional details (encrypted)
+        timestamp:
+          type: string
+          format: date-time
+          description: Timestamp of the action
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              msg:
+                type: string
+              param:
+                type: string
+              value:
+                type: string
+    TokenResponse:
+      type: object
+      properties:
+        _id:
+          type: string
+        role:
+          type: string
+          enum: [patient, provider, admin]
+        email:
+          type: string
+        name:
+          type: string
+        token:
+          type: string
+          description: JWT token
+paths:
+  /auth/register:
+    post:
+      summary: Register a new user
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                role:
+                  type: string
+                  enum: [patient, provider, admin]
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  minLength: 8
+                name:
+                  type: string
+                phone:
+                  type: string
+                address:
+                  $ref: '#/components/schemas/User/properties/address'
+                medicalInfo:
+                  $ref: '#/components/schemas/User/properties/medicalInfo'
+                providerInfo:
+                  $ref: '#/components/schemas/User/properties/providerInfo'
+              required:
+                - role
+                - email
+                - password
+                - name
+      responses:
+        '201':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Unauthorized (e.g., non-admin registering provider/admin)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - BearerAuth: [] # Optional: Admin token for provider/admin registration
+  /auth/login:
+    post:
+      summary: Authenticate user and get token
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+              required:
+                - email
+                - password
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /users/{id}:
+    get:
+      summary: Get user profile
+      tags:
+        - Users
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: User ID
+      responses:
+        '200':
+          description: User profile retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      summary: Update user profile
+      tags:
+        - Users
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: User ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                phone:
+                  type: string
+                address:
+                  $ref: '#/components/schemas/User/properties/address'
+                medicalInfo:
+                  $ref: '#/components/schemas/User/properties/medicalInfo'
+                providerInfo:
+                  $ref: '#/components/schemas/User/properties/providerInfo'
+      responses:
+        '200':
+          description: User profile updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  _id:
+                    type: string
+                  role:
+                    type: string
+                  email:
+                    type: string
+                  name:
+                    type: string
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /admin/users:
+    get:
+      summary: List all users
+      tags:
+        - Admin
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: List of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+        '403':
+          description: Not authorized (admin only)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /admin/users/{id}:
+    delete:
+      summary: Delete a user
+      tags:
+        - Admin
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: User ID
+      responses:
+        '200':
+          description: User deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /admin/users/{id}/role:
+    put:
+      summary: Update user role
+      tags:
+        - Admin
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: User ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                role:
+                  type: string
+                  enum: [patient, provider, admin]
+              required:
+                - role
+      responses:
+        '200':
+          description: User role updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  _id:
+                    type: string
+                  email:
+                    type: string
+                  role:
+                    type: string
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /admin/audit-logs:
+    post:
+      summary: Retrieve audit logs
+      tags:
+        - Admin
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userId:
+                  type: string
+                startDate:
+                  type: string
+                  format: date-time
+                endDate:
+                  type: string
+                  format: date-time
+                action:
+                  type: string
+                  enum:
+                    - login
+                    - logout
+                    - register_user
+                    - update_user
+                    - delete_user
+                    - create_appointment
+                    - update_appointment
+                    - cancel_appointment
+                    - view_patient_data
+                    - view_all_users
+                    - view_audit_logs
+                    - update_user_role
+                    - view_provider_appointments
+                    - view_patient_appointments
+      responses:
+        '200':
+          description: Audit logs retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AuditLog'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /appointments:
+    post:
+      summary: Create a new appointment
+      tags:
+        - Appointments
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                patientId:
+                  type: string
+                providerId:
+                  type: string
+                dateTime:
+                  type: string
+                  format: date-time
+                notes:
+                  type: string
+              required:
+                - patientId
+                - providerId
+                - dateTime
+      responses:
+        '201':
+          description: Appointment created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Appointment'
+        '400':
+          description: Invalid input or conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /appointments/{id}:
+    get:
+      summary: Get appointment by ID
+      tags:
+        - Appointments
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: Appointment ID
+      responses:
+        '200':
+          description: Appointment retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Appointment'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Appointment not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      summary: Update appointment
+      tags:
+        - Appointments
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: Appointment ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                dateTime:
+                  type: string
+                  format: date-time
+                status:
+                  type: string
+                  enum: [pending, confirmed, cancelled, completed]
+                notes:
+                  type: string
+      responses:
+        '200':
+          description: Appointment updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Appointment'
+        '400':
+          description: Invalid input or conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Appointment not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      summary: Cancel appointment
+      tags:
+        - Appointments
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: Appointment ID
+      responses:
+        '200':
+          description: Appointment cancelled
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Appointment not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /appointments/provider/{providerId}:
+    get:
+      summary: Get provider's appointments
+      tags:
+        - Appointments
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: providerId
+          required: true
+          schema:
+            type: string
+          description: Provider ID
+      responses:
+        '200':
+          description: Provider's appointments retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Appointment'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /appointments/patient/{patientId}:
+    get:
+      summary: Get patient's appointments
+      tags:
+        - Appointments
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: patientId
+          required: true
+          schema:
+            type: string
+          description: Patient ID
+      responses:
+        '200':
+          description: Patient's appointments retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Appointment'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
