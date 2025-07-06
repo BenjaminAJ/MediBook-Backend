@@ -3,6 +3,7 @@ import cors from "cors";
 import YAML from "yamljs";
 import swaggerUi from "swagger-ui-express";
 import errorHandler from "./middleware/errorHandler.js";
+import connectDB from "./config/connectDB.js";
 
 
 // Importing routes
@@ -16,6 +17,9 @@ const app = express();
 
 // Load Swagger documentation
 const swaggerDocument = YAML.load( 'docs/swagger.yaml');
+
+//Connect to Database
+connectDB();
 
 
 // Enable CORS for all origins
