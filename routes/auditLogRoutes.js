@@ -1,8 +1,8 @@
 import express from "express";
 import {body} from "express-validator"
 import { getAuditLogs } from "../controllers/auditLogController.js";
-import authMiddleware from "../middleware/auth.js";
-import adminMiddleware from "../middleware/admin.js";
+import {authMiddleware} from "../middleware/auth.js";
+import {adminMiddleware} from "../middleware/admin.js";
 
 const router = express.Router();
 
