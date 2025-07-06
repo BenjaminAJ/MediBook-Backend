@@ -34,6 +34,6 @@ const auditLogValidation = [
 ];
 
 // Routes
-router.post('/audit-logs', authMiddleware, adminMiddleware,auditLogValidation, getAuditLogs);
+router.post('/', authMiddleware, adminMiddleware,auditLogValidation, getAuditLogs);
 
 export default router;
