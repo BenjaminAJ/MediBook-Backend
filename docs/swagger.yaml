@@ -560,6 +560,63 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+  /audit-logs:
+    post:
+      summary: Retrieve and filter audit logs
+      tags:
+        - Audit
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userId:
+                  type: string
+                  description: Filter by user ID
+                action:
+                  type: string
+                  description: Filter by action type
+                  enum:
+                    - login
+                    - logout
+                    - register_user
+                    - update_user
+                    - delete_user
+                    - create_appointment
+                    - update_appointment
+                    - cancel_appointment
+                    - view_patient_data
+                    - view_all_users
+                    - view_audit_logs
+                    - update_user_role
+                    - view_provider_appointments
+                    - view_patient_appointments
+                    - update_system_config
+                startDate:
+                  type: string
+                  format: date-time
+                  description: Start of date range
+                endDate:
+                  type: string
+                  format: date-time
+                  description: End of date range
+      responses:
+        '200':
+          description: A list of audit logs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AuditLog'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
   /appointments:
     post:
       summary: Create a new appointment
