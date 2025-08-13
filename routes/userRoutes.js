@@ -37,7 +37,13 @@ const updateValidation = [
 ];
 
 router.get(
-  "/:id",
+  "/profile", // Endpoint for authenticated user to view their own profile
+  authMiddleware,
+  getUserProfile
+);
+
+router.get(
+  "/:id", // Endpoint for admin to view any user's profile by ID
   [param("id").isMongoId().withMessage("Invalid user ID")],
   authMiddleware,
   getUserProfile

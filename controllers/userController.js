@@ -113,12 +113,12 @@ export const loginUser = asyncHandler(async (req, res) => {
 // @route   GET /api/users/:id
 // @access  Private (user or admin)
 export const getUserProfile = asyncHandler(async (req, res) => {
-  const userId = req.params.id;
   const requestingUser = req.user; // From auth middleware
+  const userId = req.params.id || requestingUser.id; // Use ID from params if present (for admin), otherwise use authenticated user's ID
 
   // Restrict access: Users can only view their own profile, admins can view any
   if (
-    requestingUser.id.toString() !== userId &&
+    requestingUser.id.toString() !== userId.toString() &&
     requestingUser.role !== "admin"
   ) {
     res.status(403);
@@ -134,7 +134,7 @@ export const getUserProfile = asyncHandler(async (req, res) => {
   // Log profile view (only for admin accessing another user’s data)
   if (
     requestingUser.role === "admin" &&
-    requestingUser.id.toString() !== userId
+    requestingUser.id.toString() !== userId.toString()
   ) {
     await AuditLog.create({
       userId: requestingUser.id,
