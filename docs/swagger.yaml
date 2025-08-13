@@ -227,6 +227,7 @@ paths:
                 - email
                 - password
                 - name
+                - phone
       responses:
         '201':
           description: User registered successfully
@@ -287,9 +288,35 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+  /users/profile:
+    get:
+      summary: Get authenticated user's profile
+      tags:
+        - Users
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: User profile retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: Unauthorized (no token or invalid token)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /users/{id}:
     get:
-      summary: Get user profile
+      summary: Get any user profile by ID (Admin only)
       tags:
         - Users
       security:
@@ -309,7 +336,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/User'
         '403':
-          description: Not authorized
+          description: Not authorized (requires admin role)
           content:
             application/json:
               schema:
