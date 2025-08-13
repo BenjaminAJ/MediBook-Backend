@@ -28,8 +28,7 @@ const auditLogSchema = mongoose.Schema({
     trim: true,
   },
   details: {
-    type: String,
-    trim: true,
+    type: Object, // Changed to Object to allow storing JSON-like data
     default: {},
   },
   timestamp: {
