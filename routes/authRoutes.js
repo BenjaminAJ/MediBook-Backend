@@ -10,6 +10,7 @@ const registerValidation = [
   body('email').isEmail().withMessage('Invalid email'),
   body('password').isLength({ min: 8 }).withMessage('Password must be at least 8 characters'),
   body('name').notEmpty().withMessage('Name is required'),
+  body('phone').notEmpty().withMessage('Phone number is required'),
 ];
 
 // @desc Register a new user 
