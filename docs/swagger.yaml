@@ -241,6 +241,28 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+  /appointments/my-appointments:
+    get:
+      summary: Get authenticated user's appointments
+      tags:
+        - Appointments
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Authenticated user's appointments retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Appointment'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '403':
           description: Unauthorized (e.g., non-admin registering provider/admin)
           content:

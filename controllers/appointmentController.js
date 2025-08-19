@@ -225,6 +225,41 @@ export const getProviderAppointments = asyncHandler(async (req, res) => {
   res.status(200).json(appointments);
 });
 
+// @desc    Get appointments for the authenticated user (patient or provider)
+// @route   GET /api/appointments/my-appointments
+// @access  Private (patient or provider)
+export const getMyAppointments = asyncHandler(async (req, res) => {
+  const requestingUser = req.user; // From auth middleware
+  let appointments;
+
+  if (requestingUser.role === 'patient') {
+    appointments = await Appointment.find({ patientId: requestingUser.id })
+      .populate('providerId', 'name providerInfo.specialization')
+      .sort({ dateTime: 1 });
+
+    await AuditLog.create({
+      userId: requestingUser.id,
+      action: 'view_my_patient_appointments',
+      details: { patientId: requestingUser.id, count: appointments.length },
+    });
+  } else if (requestingUser.role === 'provider') {
+    appointments = await Appointment.find({ providerId: requestingUser.id })
+      .populate('patientId', 'name email')
+      .sort({ dateTime: 1 });
+
+    await AuditLog.create({
+      userId: requestingUser.id,
+      action: 'view_my_provider_appointments',
+      details: { providerId: requestingUser.id, count: appointments.length },
+    });
+  } else {
+    res.status(403);
+    throw new Error('Not authorized to view appointments for this role');
+  }
+
+  res.status(200).json(appointments);
+});
+
 // @desc    Get appointments for a patient
 // @route   GET /api/appointments/patient/:patientId
 // @access  Private (patient or admin)
@@ -253,4 +288,3 @@ export const getPatientAppointments = asyncHandler(async (req, res) => {
 
   res.status(200).json(appointments);
 });
-

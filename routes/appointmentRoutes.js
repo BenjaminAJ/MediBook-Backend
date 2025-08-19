@@ -5,6 +5,7 @@ import {
     cancelAppointment,
   createAppointment,
   getAppointment,
+  getMyAppointments,
   getPatientAppointments,
   getProviderAppointments,
   updateAppointment,
@@ -72,6 +73,12 @@ router.get(
   [param("patientId").isMongoId().withMessage("Invalid patient ID")],
   authMiddleware,
   getPatientAppointments
+);
+
+router.get(
+  "/my-appointments",
+  authMiddleware,
+  getMyAppointments
 );
 
 export default router;
