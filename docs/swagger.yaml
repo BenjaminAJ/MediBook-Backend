@@ -241,6 +241,28 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+  /users/providers:
+    get:
+      summary: Get all providers
+      tags:
+        - Users
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: List of providers retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+        '401':
+          description: Unauthorized (no token or invalid token)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /appointments/my-appointments:
     get:
       summary: Get authenticated user's appointments

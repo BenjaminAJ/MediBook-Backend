@@ -2,6 +2,7 @@ import express from "express";
 import { body, param } from "express-validator";
 import { authMiddleware } from "../middleware/auth.js";
 import {
+  getAllProviders,
   getUserProfile,
   updateUserProfile,
 } from "../controllers/userController.js";
@@ -55,4 +56,11 @@ router.put(
   authMiddleware,
   updateUserProfile
 );
+
+router.get(
+  "/providers",
+  authMiddleware,
+  getAllProviders
+);
+
 export default router;

@@ -202,6 +202,22 @@ export const updateUserProfile = asyncHandler(async (req, res) => {
   });
 });
 
+// @desc    Get all users with role 'provider'
+// @route   GET /api/users/providers
+// @access  Private (authenticated users)
+export const getAllProviders = asyncHandler(async (req, res) => {
+  const providers = await User.find({ role: 'provider' }).select('-password');
+
+  // Log action
+  await AuditLog.create({
+    userId: req.user.id,
+    action: 'view_all_providers',
+    details: { count: providers.length },
+  });
+
+  res.status(200).json(providers);
+});
+
 // Helper function to generate JWT
 const generateToken = (id, role) => {
   return jwt.sign({ id, role }, process.env.JWT_SECRET, {
