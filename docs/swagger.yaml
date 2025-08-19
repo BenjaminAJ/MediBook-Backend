@@ -151,6 +151,9 @@ components:
             - update_user_role
             - view_provider_appointments
             - view_patient_appointments
+            - view_my_patient_appointments
+            - view_my_provider_appointments
+            - view_all_providers
           description: Action performed
         details:
           type: object
