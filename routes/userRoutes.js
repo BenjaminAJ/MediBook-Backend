@@ -44,6 +44,12 @@ router.get(
 );
 
 router.get(
+  "/providers", // Endpoint to get all providers
+  authMiddleware,
+  getAllProviders
+);
+
+router.get(
   "/:id", // Endpoint for admin to view any user's profile by ID
   [param("id").isMongoId().withMessage("Invalid user ID")],
   authMiddleware,
@@ -55,12 +61,6 @@ router.put(
   [param("id").isMongoId().withMessage("Invalid user ID"), ...updateValidation],
   authMiddleware,
   updateUserProfile
-);
-
-router.get(
-  "/providers",
-  authMiddleware,
-  getAllProviders
 );
 
 export default router;
