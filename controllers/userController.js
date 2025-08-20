@@ -178,8 +178,15 @@ export const updateUserProfile = asyncHandler(async (req, res) => {
   user.name = name || user.name;
   user.phone = phone || user.phone;
   user.address = address || user.address;
-  if (user.role === "patient") {
-    user.medicalInfo = medicalInfo || user.medicalInfo;
+  if (user.role === "patient" && medicalInfo) {
+    // Handle medicalInfo fields individually to allow partial updates and clear optional fields
+    if (medicalInfo.dateOfBirth !== undefined) user.medicalInfo.dateOfBirth = medicalInfo.dateOfBirth;
+    if (medicalInfo.bloodType !== undefined) {
+      // If bloodType is an empty string, set it to undefined to clear the field or avoid enum validation
+      user.medicalInfo.bloodType = medicalInfo.bloodType === '' ? undefined : medicalInfo.bloodType;
+    }
+    if (medicalInfo.allergies !== undefined) user.medicalInfo.allergies = medicalInfo.allergies;
+    if (medicalInfo.medicalHistory !== undefined) user.medicalInfo.medicalHistory = medicalInfo.medicalHistory;
   }
   if (user.role === "provider") {
     user.providerInfo = providerInfo || user.providerInfo;
