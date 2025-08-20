@@ -34,7 +34,7 @@ export const getAuditLogs = asyncHandler(async (req, res) => {
 
   // Log the action
   await AuditLog.create({
-    userId: req.user._id,
+    userId: req.user.id,
     action: 'view_audit_logs',
     details: { query, count: logs.length },
   });
