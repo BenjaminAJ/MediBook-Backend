@@ -42,6 +42,12 @@ router.post(
   createAppointment
 );
 router.get(
+  "/my-appointments",
+  authMiddleware,
+  getMyAppointments
+);
+
+router.get(
   "/:id",
   [param("id").isMongoId().withMessage("Invalid appointment ID")],
   authMiddleware,
@@ -73,12 +79,6 @@ router.get(
   [param("patientId").isMongoId().withMessage("Invalid patient ID")],
   authMiddleware,
   getPatientAppointments
-);
-
-router.get(
-  "/my-appointments",
-  authMiddleware,
-  getMyAppointments
 );
 
 export default router;
