@@ -234,7 +234,7 @@ export const getMyAppointments = asyncHandler(async (req, res) => {
 
   if (requestingUser.role === 'patient') {
     appointments = await Appointment.find({ patientId: requestingUser.id })
-      .populate('providerId', 'name providerInfo.specialization')
+      .populate('providerId', 'name providerInfo.specialization providerInfo.clinicName')
       .sort({ dateTime: 1 });
 
     await AuditLog.create({
